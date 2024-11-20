@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Room, Participant } from './room.entity';
 
+export const defaultUserActivity = {
+  isCameraEnabled: true,
+  isMicEnabled: true,
+  isScreenSharing: false
+}
+
 @Injectable()
 export class RoomService {
   private rooms: Map<string, Room> = new Map();
@@ -43,7 +49,7 @@ export class RoomService {
     try {
       const room = this.rooms.get(roomId);
       if (room) {
-        room.participants.set(socketId, { socketId, username, isCameraEnabled: true, isMicEnabled: true, isScreenSharing: false });
+        room.participants.set(socketId, { socketId, username, ...defaultUserActivity });
         return true;
       }
       return false;
@@ -60,7 +66,7 @@ export class RoomService {
       if (room) {
         const removed = room.participants.delete(socketId);
         
-        // Если комната пуста - удаляем её
+        // If Room is empty - delete it
         if (room.participants.size === 0) {
           this.rooms.delete(roomId);
           console.log(`Room ${roomId} deleted - no participants left`);

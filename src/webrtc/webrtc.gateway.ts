@@ -6,7 +6,7 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { RoomService } from '../room/room.service';
+import { RoomService, defaultUserActivity } from '../room/room.service';
 
 @WebSocketGateway({
   cors: {
@@ -95,9 +95,7 @@ export class WebRTCGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.to(room.id).emit('user-joined', {
       socketId: client.id,
       username: payload.username,
-      isCameraEnabled: true,
-      isMicEnabled: true,
-      isScreenSharing: false,
+      ...defaultUserActivity,
     });
 
     // Request offers from all participants
