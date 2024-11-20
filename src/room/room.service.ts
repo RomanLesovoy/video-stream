@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Room } from './room.entity';
+import { Room, Participant } from './room.entity';
 
 @Injectable()
 export class RoomService {
@@ -28,12 +28,22 @@ export class RoomService {
     return this.rooms.get(roomId);
   }
 
+  updateParticipant(roomId: string, socketId: string, participant: Participant): boolean {
+    const oldParticipant = this.rooms.get(roomId)?.participants.get(socketId);
+    const room = this.rooms.get(roomId);
+    if (room) {
+      room.participants.set(socketId, { ...oldParticipant, ...participant });
+      return true;
+    }
+    return false;
+  }
+
   // Add participant to room
   addParticipant(roomId: string, socketId: string, username: string): boolean {
     try {
       const room = this.rooms.get(roomId);
       if (room) {
-        room.participants.set(socketId, { socketId, username });
+        room.participants.set(socketId, { socketId, username, isCameraEnabled: true, isMicEnabled: true, isScreenSharing: false });
         return true;
       }
       return false;

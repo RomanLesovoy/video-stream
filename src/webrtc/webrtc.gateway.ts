@@ -73,21 +73,8 @@ export class WebRTCGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('stream-state-changed')
   handleStreamStateChanged(client: Socket, payload: any) {
+    this.roomService.updateParticipant(payload.roomId, client.id, payload);
     this.server.to(payload.roomId).emit('stream-state-changed', { ...payload, socketId: client.id });
-  }
-
-  @SubscribeMessage('replace-track')
-  handleReplaceTrack(client: Socket, payload: { type: 'screen' | 'camera' }) {
-    // Находим комнату, в которой находится клиент
-    this.server.sockets.adapter.rooms.forEach((_, roomId) => {
-      if (this.isParticipant(roomId, client.id)) {
-        // Отправляем всем участникам комнаты, кроме отправителя
-        client.to(roomId).emit('replace-track', {
-          socketId: client.id,
-          type: payload.type
-        });
-      }
-    });
   }
 
   @SubscribeMessage('join-room')
@@ -107,7 +94,10 @@ export class WebRTCGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Notify other participants
     client.to(room.id).emit('user-joined', {
       socketId: client.id,
-      username: payload.username
+      username: payload.username,
+      isCameraEnabled: true,
+      isMicEnabled: true,
+      isScreenSharing: false,
     });
 
     // Request offers from all participants
@@ -177,10 +167,5 @@ export class WebRTCGateway implements OnGatewayConnection, OnGatewayDisconnect {
       candidate: payload.candidate,
       from: client.id
     });
-  }
-
-  private isParticipant(roomId: string, socketId: string): boolean {
-    const room = this.roomService.getRoom(roomId);
-    return room?.participants.has(socketId) ?? false;
   }
 }
